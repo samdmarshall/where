@@ -7,7 +7,7 @@ addQuitProc(resetAttributes)
 
 var hostname = " ".repeat(255)
 let length =  gethostname(hostname, 255)
-hostname = hostname.split(".local")[0]
+hostname = hostname.split(".local")[0].strip()
 
 let path = getCurrentDir()
 

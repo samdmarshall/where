@@ -30,16 +30,15 @@ var modifier = " in "
 if existsEnv("SSH_CONNECTION"):
   modifier = " via ssh; in "
 
-
-stdout.write("on ")
-if not disable_color:
+if disable_color:
+  stdout.write("on " & hostname & modifier & path & "\n")
+else:
+  stdout.write("on ")
   stdout.setForegroundColor(fgYellow)
-stdout.write(hostname)
-if not disable_color:
+  stdout.write(hostname)
   stdout.resetAttributes()
-stdout.write(modifier)
-if not disable_color:
+  stdout.write(modifier)
   stdout.setForegroundColor(fgGreen)
-stdout.write(path)
-stdout.write("\n")
+  stdout.write(path)
+  stdout.write("\n")
 

@@ -86,7 +86,7 @@ proc main() =
   stdout.write("\n")
   color(fgRed):
     stdout.write(shell_level)
-  stdout.write("\n")
+#  stdout.write("\n")
 
 when isMainModule:
   main()

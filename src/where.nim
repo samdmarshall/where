@@ -1,3 +1,4 @@
+
 # =======
 # Imports
 # =======
@@ -8,8 +9,10 @@ import sequtils
 import strutils
 import strscans
 import terminal
-import parseopt
+import strformat
 import nativesockets
+
+import commandeer
 
 # =====
 # Types
@@ -21,7 +24,17 @@ type
     Always,
     Never
 
-#
+# =========
+# Constants
+# =========
+
+const
+  NimblePkgVersion {.strdefine.} = ""
+  NimblePkgName {.strdefine.} = ""
+
+# =========
+# Templates
+# =========
 
 template color(color: untyped, body: untyped) =
   block:
@@ -30,42 +43,50 @@ template color(color: untyped, body: untyped) =
     body
     if display_color != Never:
       stdout.resetAttributes()
-# ===================
-# * Main Entry Here *
-# ===================
 
-let hostname = getHostname()
-let path = getCurrentDir()
+# ==========
+# Main Entry
+# ==========
 
-#let depth = getEnv("SHLVL", "1").parseInt()
-#let shell_level = sequtils.repeat(" ~>", depth)
+proc main() =
+  var hostname = getHostname()
+  hostname.removeSuffix(".local")
+  let path = getCurrentDir()
+  let user = getEnv("USER")
 
-let is_ssh = (existsEnv("SSH_CONNECTION") or existsEnv("SSH_CLIENT") or existsEnv("SSH_TTY"))
+  let depth = getEnv("SHLVL", "1").parseInt()
+  let shell_level = sequtils.repeat(" ~>", depth)
 
-var display_color: ColorFlagOptions
-var p = initOptParser()
+  let is_ssh = (existsEnv("SSH_CONNECTION") or existsEnv("SSH_CLIENT") or existsEnv("SSH_TTY"))
 
-for kind, key, value in p.getopt():
-  case kind
-  of cmdShortOption, cmdLongOption:
-    case key
-    of "c", "color": display_color = parseEnum[ColorFlagOptions](value, Auto)
-    else: discard
-  else: discard
+  commandline:
+    option ColorFlag, string, "color", "c", "auto"
+    exitoption "version", "v", fmt"{NimblePkgName} v{NimblePkgVersion}"
+    exitoption "help", "h", fmt"{NimblePkgName} [-h|--help] [-v|--version] [-c|--color:<auto|always|never>]"
 
-if display_color == Auto:
-  display_color =
-    if isatty(stdout): Always
-    else: Never
+  var display_color = parseEnum[ColorFlagOptions](ColorFlag)
 
-stdout.write("on ")
-color(fgYellow):
-  stdout.write(hostname)
-if is_ssh:
- color(fgMagenta):
-   stdout.write(" via ssh;")
-stdout.write(" in ")
-color(fgGreen):
-  stdout.write(path)
-stdout.write("\n")
+  if display_color == Auto:
+    display_color = 
+      if isatty(stdout): Always
+      else: Never
 
+  stdout.write("on ")
+  color(fgYellow):
+    stdout.write(hostname)
+  if is_ssh:
+    color(fgMagenta):
+      stdout.write(" via ssh;")
+  stdout.write(" as ")
+  color(fgRed):
+    stdout.write(user)
+  stdout.write(" in ")
+  color(fgGreen):
+    stdout.write(path)
+  stdout.write("\n")
+  color(fgRed):
+    stdout.write(shell_level)
+  stdout.write("\n")
+
+when isMainModule:
+  main()

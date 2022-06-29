@@ -5,6 +5,7 @@
 
 import os
 import net
+import unicode
 import sequtils
 import strutils
 import strscans
@@ -19,10 +20,10 @@ import commandeer
 # =====
 
 type
-  ColorFlagOptions = enum
-    Auto,
-    Always,
-    Never
+  ColorFlagOptions {.pure.} = enum
+    auto,
+    always,
+    never
 
 # =========
 # Constants
@@ -38,10 +39,10 @@ const
 
 template color(color: untyped, body: untyped) =
   block:
-    if display_color != Never:
+    if display_color != ColorFlagOptions.never:
       stdout.setForegroundColor(color)
     body
-    if display_color != Never:
+    if display_color != ColorFlagOptions.never:
       stdout.resetAttributes()
 
 # ==========
@@ -64,12 +65,12 @@ proc main() =
     exitoption "version", "v", fmt"{NimblePkgName} v{NimblePkgVersion}"
     exitoption "help", "h", fmt"{NimblePkgName} [-h|--help] [-v|--version] [-c|--color:<auto|always|never>]"
 
-  var display_color = parseEnum[ColorFlagOptions](ColorFlag)
+  var display_color = parseEnum[ColorFlagOptions](toLower(ColorFlag))
 
-  if display_color == Auto:
+  if display_color == ColorFlagOptions.auto:
     display_color = 
-      if isatty(stdout): Always
-      else: Never
+      if isatty(stdout): ColorFlagOptions.always
+      else: ColorFlagOptions.never
 
   stdout.write("on ")
   color(fgYellow):
